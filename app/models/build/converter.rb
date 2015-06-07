@@ -81,9 +81,13 @@ module Build
 
           to_persist = versions_paths.select do |version, path|
             if (version.new_record? || version.rebuild?) && path.present?
+              if version.rebuild?
+                version.update_attributes!(rebuild: false)
+
+                version = version.new_rev_version
+              end
               version.component.save!
               version.component_id = version.component.id
-              version.rebuild = false
               version.save
             else
               false

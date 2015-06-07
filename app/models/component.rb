@@ -44,12 +44,16 @@ class Component < ActiveRecord::Base
   end
 
   def rebuild!
-    versions.update_all(rebuild: true)
+    versions.latest_rev.update_all(rebuild: true)
     UpdateComponent.perform_async(bower_name)
   end
 
   def self.rebuild!
-    Version.update_all(rebuild: true)
+    Version.latest_rev.update_all(rebuild: true)
     UpdateScheduler.perform_async
+  end
+
+  def revision(bower_version)
+    versions.where(bower_version: bower_version).count
   end
 end

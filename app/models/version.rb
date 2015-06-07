@@ -21,6 +21,10 @@ class Version < ActiveRecord::Base
     where(:string => self.fix_version_string(string))
   }
 
+  scope :latest_rev, lambda {
+    select('distinct on(component_id, bower_version) *').order('component_id, bower_version, string desc')
+  }
+
   def gem_version
     @gem_version ||= Gem::Version.new(string)
   end
@@ -99,6 +103,15 @@ class Version < ActiveRecord::Base
   def rebuild!
     update_attribute(:rebuild, true)
     BuildVersion.perform_async(component.bower_name, bower_version)
+  end
+
+  def new_rev_version
+    dup.tap do |version|
+      version.string = [
+        version.string,
+        version.component.revision(version.bower_version)
+      ].join(?.)
+    end
   end
 
 end
